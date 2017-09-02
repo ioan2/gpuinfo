@@ -29,16 +29,17 @@ Johannes Heinecke
 
 ## Run
 
-Run 
+Run the following
+
     gcpuinfo -h
     ggpuinfo -h
 
 for help on any option
 
-## Install library
+## Install
 
     cd build
     make install
 
-By default, the library will be installed in `/usr/local`. To have it installed in a different location, uncomment modify the line `set(CMAKE_INSTALL_PREFIX ../testinstall)` in [CMakeLists.txt](CMakeLists.txt)
+By default, the tools will be installed in `/usr/local/bin`. To have them installed in a different location, uncomment modify the line `set(CMAKE_INSTALL_PREFIX ../testinstall)` in [CMakeLists.txt](CMakeLists.txt)
 
