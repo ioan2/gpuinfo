@@ -28,25 +28,19 @@ set(gcpuinfo_src
   cpuinfo.cc
   utils.h
   cpuinfo.h)
-
-
 add_executable (gcpuinfo ${gcpuinfo_src} gcpuinfo.cc)
-
 target_link_libraries(gcpuinfo ${GTK2_LIBRARIES})
-
-
-set(ggpuinfo_src
-  utils.cc
-  gpuinfo.cc
-  utils.h
-  gpuinfo.h)
-
-
-add_executable (ggpuinfo ${ggpuinfo_src} ggpuinfo.cc)
-
-target_link_libraries(ggpuinfo ${GTK2_LIBRARIES} ${LIBNVIDIA_ML})
-
-
 install (TARGETS gcpuinfo DESTINATION bin)
-install (TARGETS ggpuinfo DESTINATION bin)
+
+if (CUDA_FOUND)
+  set(ggpuinfo_src
+    utils.cc
+    gpuinfo.cc
+    utils.h
+    gpuinfo.h)
+  add_executable (ggpuinfo ${ggpuinfo_src} ggpuinfo.cc)
+  target_link_libraries(ggpuinfo ${GTK2_LIBRARIES} ${LIBNVIDIA_ML})
+  install (TARGETS ggpuinfo DESTINATION bin)
+endif()
+
 

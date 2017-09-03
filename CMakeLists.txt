@@ -42,6 +42,8 @@ if (CUDA_FOUND)
   set(LIBNVIDIA_ML "/usr/local/cuda-8.0/lib64/stubs/libnvidia-ml.so")
   message(STATUS "Cuda found: ${CUDA_INCLUDE_DIRS}, using ${LIBNVIDIA_ML}")
   include_directories(${CUDA_INCLUDE_DIRS})
+else()
+  message(STATUS "Cuda not found: cannot compile ggpuinfo")
 endif()
 
 add_subdirectory (src)

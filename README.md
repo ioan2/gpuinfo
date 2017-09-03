@@ -3,7 +3,7 @@
 This project provides to very simple GTK v2 based tools to display continously the CPU (user/nice/system)or GPU load (utilisation/temperature/fan speed/memory usage/power usage) in an widget.
 An option allows to print load information on screen (or to an logfile, if needed with a time stamp)
 
-ggpuinfo needs the libnvidia-ml.so library, which comes with CUDA 8.0
+`gcpuinfo` displays current CPU load by reading `/proc/stat`. `ggpuinfo` displays GPU load by using the API provided by the `libnvidia-ml.so` library, which comes with CUDA 8.0.
 
 ## License
 
