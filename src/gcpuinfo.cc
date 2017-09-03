@@ -188,7 +188,8 @@ int main(int argc, char *argv[]) {
 	
 	char tmp[70];
 	for (unsigned int i = 0; i < cpus; ++i) {
-	    sprintf(tmp, "cpu: %d", i);
+	    if (i == 0) sprintf(tmp, "cpu: total");
+	    else sprintf(tmp, "cpu: %d", i-1);
 	    // frame with gpu id
 	    GtkWidget *frame = gtk_frame_new(tmp);
 	    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);

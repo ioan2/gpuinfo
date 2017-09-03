@@ -37,6 +37,7 @@ are permitted provided that the following conditions are met:
 using std::ostream;
 using std::endl;
 
+// maximal number of CPUs we can handle (-1, since 0 is the sum of all cpus)
 #define MAX_CPU 128
 
 /** class to read and process cpu information from /proc/stat */
@@ -45,7 +46,7 @@ class CpuInfo {
     CpuInfo();
     ~CpuInfo();
 
-    /** get number of available CPUs */
+    /** get number of available CPUs as found in /proc/stat (including the total cpu line),*/
     unsigned int getCpus() { return cpus; }
 
     /** get CPU time for user, system, nice and idle in per mille

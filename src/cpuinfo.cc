@@ -86,7 +86,8 @@ void CpuInfo::read_proc_stat() {
     unsigned int ct = 0;
     while(ifs) {
 	getline(ifs, line);
-	if (strncmp(line.c_str(), "cpu", 3) == 0 && line[3] != ' ') {
+	if (strncmp(line.c_str(), "cpu", 3) == 0// && line[3] != ' '
+	    ) {
 	    strcpy(tmp, &line.c_str()[5]);
 	    char *saveptr;
 	    char *token = strtok_r(tmp, " ", &saveptr);
