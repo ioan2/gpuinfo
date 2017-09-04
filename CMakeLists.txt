@@ -42,12 +42,16 @@ if (CUDA_FOUND)
   set(LIBNVIDIA_ML "/usr/local/cuda-8.0/lib64/stubs/libnvidia-ml.so")
   message(STATUS "Cuda found: ${CUDA_INCLUDE_DIRS}, using ${LIBNVIDIA_ML}")
   include_directories(${CUDA_INCLUDE_DIRS})
+  if (NOT EXISTS "${CUDA_INCLUDE_DIRS}/nvml.h")
+    set(CUDA_FOUND FALSE)
+    message(STATUS "Cuda does not provide nvml.h, cannot compile ggpuinfo")
+  endif()
 else()
   message(STATUS "Cuda not found: cannot compile ggpuinfo")
 endif()
 
 add_subdirectory (src)
 
-# activate this in order to avoid /usr/local/lib
-# set(CMAKE_INSTALL_PREFIX ../testinstall)
+# change this in order to avoid /usr/local/
+set(CMAKE_INSTALL_PREFIX /usr/local)
 

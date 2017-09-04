@@ -50,12 +50,13 @@ are permitted provided that the following conditions are met:
 using namespace std;
 
 /** names of pieces information */
-const char *infos[] = { "user", "niced", "system", NULL };
-const unsigned int infolen = 3;
+//const char *infos[] = { "user", "niced", "system", NULL };
+//const unsigned int infolen = 3;
 
 /** structure to give information to callback */
 struct cb_data {
     CpuInfo *ci;
+    vector<const char *>infos;
     map<const char *, vector<GtkWidget *> > labels;
 };
 
@@ -71,14 +72,13 @@ gboolean time_handler(struct cb_data *cbdata) {
 	char tmp[100];
 
 	// for each piece of information
-	for (unsigned x = 0; x < infolen; ++x) {
+	for (unsigned x = 0; x < cbdata->infos.size(); ++x) {
 	    // find label in cbdata
-	    GtkWidget *label = cbdata->labels[infos[x]][i];
-
+	    GtkWidget *label = cbdata->labels[cbdata->infos[x]][i];
 
 	    unsigned int val = 0;
 	    // get correct values to display
-	    switch(infos[x][0]) {
+	    switch(cbdata->infos[x][0]) {
 	    case 'u':
 		sprintf(tmp, "%.1f%%", u[i]/10.0);
 		val = u[i];
@@ -117,6 +117,8 @@ int main(int argc, char *argv[]) {
 	cerr << argv[0] << " options" << endl
 	     << "  -d  update delay (default 500ms)" << endl
 	     << "  -T  textual output" << endl
+	     << "\n without -T" <<endl
+	     << "  --nn do not show niced" << endl
 	     << "\n with -T" <<endl
 	     << "  -t  add time stamp" << endl
 	     << "  -l  log mode" << endl
@@ -129,6 +131,7 @@ int main(int argc, char *argv[]) {
     bool textonly = false;
     bool logmode = false;
     bool timest = false;
+    bool showniced = true;
 
     for (int i = 1; i<argc; ++i) {
 	if (strcmp(argv[i], "-d") == 0 && i < argc-1) {
@@ -148,6 +151,8 @@ int main(int argc, char *argv[]) {
 		  graphics = true;
 		  } else if (strcmp(argv[i], "-s") == 0) {
 		  shortoutput = true; */
+	} else if (strcmp(argv[i], "--nn") == 0) {
+	    showniced = false;
 	} else if (strcmp(argv[i], "-l") == 0) {
 	    logmode = true;
 	} else if (strcmp(argv[i], "-t") == 0) {
@@ -163,6 +168,13 @@ int main(int argc, char *argv[]) {
     unsigned int cpus = ci.getCpus();
   
     if (!textonly) {
+	// initialise cbdata
+	struct cb_data cbdata;
+	cbdata.ci = &ci;
+	cbdata.infos.push_back("user");
+	if (showniced) cbdata.infos.push_back("niced");
+	cbdata.infos.push_back("system");
+
 	gtk_init(&argc, &argv);
 
 	//printf("GTK+ version: %d.%d.%d\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
@@ -182,9 +194,7 @@ int main(int argc, char *argv[]) {
 	gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 	gtk_container_add(GTK_CONTAINER(window), table);
 
-	// initialise cbdata
-	struct cb_data cbdata;
-	cbdata.ci = &ci;
+
 	
 	char tmp[70];
 	for (unsigned int i = 0; i < cpus; ++i) {
@@ -197,13 +207,13 @@ int main(int argc, char *argv[]) {
 	    gtk_table_attach_defaults(GTK_TABLE(table), frame, i, i+1, 0, 1); // left, right, top, bottom
 
 	    // an inner table within the frame (the table keeps the frames+labels for "memory" etc
-	    GtkWidget *innertable = gtk_table_new(infolen, 1, TRUE); // rows, columns, homogenuous
+	    GtkWidget *innertable = gtk_table_new(cbdata.infos.size(), 1, TRUE); // rows, columns, homogenuous
 	    gtk_container_add(GTK_CONTAINER(frame), innertable);    
 
 	    // we create inner frames with buttons for the information to be displayed
-	    for (unsigned x = 0; x < infolen; ++x) {
+	    for (unsigned x = 0; x < cbdata.infos.size(); ++x) {
 		// frame with label like "memory"
-		GtkWidget *iframe = gtk_frame_new(infos[x]);
+		GtkWidget *iframe = gtk_frame_new(cbdata.infos[x]); //infos[x]);
 		gtk_frame_set_shadow_type(GTK_FRAME(iframe), GTK_SHADOW_ETCHED_IN);
 
 		gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, 0, 1, x, x+1); // left, right, top, bottom
@@ -211,7 +221,7 @@ int main(int argc, char *argv[]) {
 		GtkWidget *label = gtk_button_new();
   
 
-		cbdata.labels[infos[x]].push_back(label);
+		cbdata.labels[cbdata.infos[x]].push_back(label);
 		gtk_container_add(GTK_CONTAINER(iframe), label); 
 	    }
 	}
