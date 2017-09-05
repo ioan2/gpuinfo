@@ -30,10 +30,12 @@ are permitted provided that the following conditions are met:
 
 #include "utils.h"
 
+#include <fstream>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 
+using namespace std;
 
 void timestamp(ostream &out) {
   char tstr[50];
@@ -95,4 +97,14 @@ void getHeatMapColor(float value, GdkColor &gcolor) {
     gcolor.blue  = (color[idx2][2] - color[idx1][2])*fractBetween + color[idx1][2];
 }
 
+/** read the first line from a file to @param contents. 
+    If the file does not exist return false, else true */
+bool readSingleLineFile(const string &filename, string &contents) {
+    ifstream ifs(filename.c_str());
+    if (!ifs) return false;
+   
+    getline(ifs, contents);
+    ifs.close();
+    return true;
 
+}

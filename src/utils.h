@@ -34,6 +34,7 @@ are permitted provided that the following conditions are met:
 #include <iostream>
 
 using std::ostream;
+using std::string;
 
 #include <gtk/gtk.h>
 
@@ -45,5 +46,9 @@ void getHeatMapColor(float value, GdkColor &gcolor);
 
 /** creates timestamp of current date and time */
 void timestamp(ostream &out);
+
+/** read the first line from a file to @param contents. 
+    If the file does not exist return false, else true */
+bool readSingleLineFile(const string &filename, string &contents);
 
 #endif

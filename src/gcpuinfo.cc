@@ -35,9 +35,6 @@ are permitted provided that the following conditions are met:
 #include <cstring>
 #include <cstdlib>
 
-//#include <math.h>
-//#include <time.h>
-//#include <sys/time.h>
 
 #include <gtk/gtk.h>
 
@@ -49,9 +46,6 @@ are permitted provided that the following conditions are met:
 
 using namespace std;
 
-/** names of pieces information */
-//const char *infos[] = { "user", "niced", "system", NULL };
-//const unsigned int infolen = 3;
 
 /** structure to give information to callback */
 struct cb_data {
@@ -63,8 +57,10 @@ struct cb_data {
 
 /** used to update labels */
 gboolean time_handler(struct cb_data *cbdata) {
-    unsigned int u[MAX_CPU], s[MAX_CPU], n[MAX_CPU], i[MAX_CPU];
+    unsigned int u[MAX_CPU], s[MAX_CPU], n[MAX_CPU], i[MAX_CPU], t[MAX_CPU];
     cbdata->ci->getCPUtime(u, s, n, i);
+    cbdata->ci->getCoreTemp(t);
+    
     unsigned int cpus = cbdata->ci->getCpus();
 
     // for each gpu device
@@ -93,6 +89,12 @@ gboolean time_handler(struct cb_data *cbdata) {
 		sprintf(tmp, "%.1f%%", s[i]/10.0);
 		val = s[i];
 		break;
+
+	    case 't':
+		sprintf(tmp, "%dC", t[i]/1000);
+		val = t[i]/100;
+		break;
+
 	    }
 
 	    // update button label (we use buttons, since labels do not have background colors)
@@ -174,6 +176,7 @@ int main(int argc, char *argv[]) {
 	cbdata.infos.push_back("user");
 	if (showniced) cbdata.infos.push_back("niced");
 	cbdata.infos.push_back("system");
+	cbdata.infos.push_back("temperature");
 
 	gtk_init(&argc, &argv);
 
@@ -216,10 +219,12 @@ int main(int argc, char *argv[]) {
 		GtkWidget *iframe = gtk_frame_new(cbdata.infos[x]); //infos[x]);
 		gtk_frame_set_shadow_type(GTK_FRAME(iframe), GTK_SHADOW_ETCHED_IN);
 
-		gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, 0, 1, x, x+1); // left, right, top, bottom
+		if (i != 0 || cbdata.infos[x][0] != 't') {
+		    // we do not need temperature for the first column (cpu total)
+		    gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, 0, 1, x, x+1); // left, right, top, bottom
+		}
 		// the button with the information (replaces a label which does not have background color)
 		GtkWidget *label = gtk_button_new();
-  
 
 		cbdata.labels[cbdata.infos[x]].push_back(label);
 		gtk_container_add(GTK_CONTAINER(iframe), label); 

@@ -29,8 +29,10 @@ are permitted provided that the following conditions are met:
 */
 
 #include "cpuinfo.h"
+#include "utils.h"
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 
 #include <cstring>
@@ -43,6 +45,7 @@ using namespace std;
 CpuInfo::CpuInfo() :
     cpus(0) {
     read_proc_stat();
+    read_sys();
 }
 
 CpuInfo::~CpuInfo() {
@@ -77,6 +80,7 @@ void CpuInfo::getCPUtime(unsigned int *user, unsigned int *system, unsigned int 
 	}
     }
 }
+
 
 void CpuInfo::read_proc_stat() {
     ifstream ifs("/proc/stat");
@@ -130,3 +134,52 @@ void CpuInfo::read_proc_stat() {
     ifs.close();
 }
 
+
+void CpuInfo::read_sys() {
+    int i = 0;
+    string path;
+    // find the correct directory with core temperature information
+    for (; i < 4; ++i) {
+	ostringstream msg;
+	msg << "/sys/class/hwmon/hwmon" << i << "/device/name";
+
+	string line;
+	if (!readSingleLineFile(msg.str(), line)) continue;
+
+	if (line == "coretemp") {
+	    path = msg.str().substr(0, msg.str().size()-4); // do not take the name bit
+	    break;
+	}
+    } 
+
+    // we found the directory, now we read the temperature for cores
+    if (!path.empty()) {
+	int j = 1;
+	unsigned int countCores = 1; // first cpu column is the total, so no equivalent for temperature
+	while(true) {
+	    ostringstream msg;
+	    msg << path << "temp" <<j << "_label";
+
+	    string line;
+	    if (!readSingleLineFile(msg.str(), line)) break; // no more files expected
+
+	    if (line.compare(0, 4, "Core") == 0) {
+		ostringstream msg2;
+		msg2 << path << "temp" <<j << "_input";
+
+		if (readSingleLineFile(msg2.str(), line)) {
+		    lastTemp[countCores] = atoi(line.c_str());
+		}
+		countCores++;
+	    }
+	    j++;
+	}
+    }
+}
+
+void CpuInfo::getCoreTemp(unsigned int *temp) {
+    read_sys();
+    for (unsigned int i = 0; i < cpus; ++i) {
+	temp[i] = lastTemp[i];
+    }    
+}

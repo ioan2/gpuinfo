@@ -57,10 +57,14 @@ class CpuInfo {
     */
     void getCPUtime(unsigned int *user, unsigned int *system, unsigned int *niced, unsigned int *idle);
 
+    void getCoreTemp(unsigned int *temp);
+
     /** simple text output of cpu status */
     void out(ostream &out);
 
  private:
+    void read_sys();
+
     void read_proc_stat();
     /// number of CPUs available
     unsigned int cpus; 
@@ -77,6 +81,8 @@ class CpuInfo {
     unsigned int diffNiced[MAX_CPU];
     unsigned int diffIdle[MAX_CPU];
     unsigned int diff_sum[MAX_CPU];
+
+    unsigned int lastTemp[MAX_CPU];
 };
 
 #endif
