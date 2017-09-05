@@ -7,7 +7,7 @@ An option allows to print load information on screen (or to an logfile, if neede
 
 ## License
 
-This library is under the [3-Clause BSD Licence](https://opensource.org/licenses/BSD-3-Clause). See [LICENSE.md](LICENSE.md)
+This library is under the [3-Clause BSD Licence](https://opensource.org/licenses/BSD-3-Clause). See [LICENSE](LICENSE)
 
 
 ## Author
