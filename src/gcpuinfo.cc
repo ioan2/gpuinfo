@@ -108,6 +108,7 @@ gboolean time_handler(struct cb_data *cbdata) {
 	    //GdkColor color;
 	    //gdk_color_parse ("white", &color);
 	    //gtk_widget_modify_text(label, GTK_STATE_NORMAL, &color);
+
 	}
     }
     return TRUE;
@@ -116,15 +117,18 @@ gboolean time_handler(struct cb_data *cbdata) {
 
 int main(int argc, char *argv[]) {
     if (argc <= 1) {
-	cerr << argv[0] << " options" << endl
+	cerr << argv[0] << " [options]" << endl
+	     << "options:" << endl
 	     << "  -d  update delay (default 500ms)" << endl
 	     << "  -T  textual output" << endl
 	     << "\n without -T" <<endl
 	     << "  --nn do not show niced" << endl
+	     << "  -v vertical layout" << endl
+	     << "  -c compact view (no labels)" << endl
 	     << "\n with -T" <<endl
 	     << "  -t  add time stamp" << endl
 	     << "  -l  log mode" << endl
-	    
+	     << endl;
 	    ;
     }
 
@@ -134,6 +138,8 @@ int main(int argc, char *argv[]) {
     bool logmode = false;
     bool timest = false;
     bool showniced = true;
+    bool vertical = false;
+    bool compact = false;
 
     for (int i = 1; i<argc; ++i) {
 	if (strcmp(argv[i], "-d") == 0 && i < argc-1) {
@@ -148,11 +154,11 @@ int main(int argc, char *argv[]) {
 	} else if (strcmp(argv[i], "-T") == 0) {
 	    textonly = true;
 	    /*    } else if (strcmp(argv[i], "-a") == 0) {
-		  all = true;
-		  } else if (strcmp(argv[i], "-g") == 0) {
-		  graphics = true;
-		  } else if (strcmp(argv[i], "-s") == 0) {
-		  shortoutput = true; */
+		  all = true; */
+	} else if (strcmp(argv[i], "-c") == 0) {
+	    compact = true;
+	} else if (strcmp(argv[i], "-v") == 0) {
+	    vertical = true; 
 	} else if (strcmp(argv[i], "--nn") == 0) {
 	    showniced = false;
 	} else if (strcmp(argv[i], "-l") == 0) {
@@ -168,7 +174,9 @@ int main(int argc, char *argv[]) {
 
     CpuInfo ci;
     unsigned int cpus = ci.getCpus();
-  
+
+
+
     if (!textonly) {
 	// initialise cbdata
 	struct cb_data cbdata;
@@ -186,13 +194,17 @@ int main(int argc, char *argv[]) {
 
 	// main window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_default_size(GTK_WINDOW(window), 300, 100);
+	//gtk_window_set_default_size(GTK_WINDOW(window), 300, 100);
 	gtk_window_set_title(GTK_WINDOW(window), APPNAME);
 	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 	gtk_container_set_border_width(GTK_CONTAINER(window), 5);
 
 	// create table (a column per gpu device)
-	GtkWidget *table = gtk_table_new(1, cpus, TRUE); // rows, columns, homogenuous
+	GtkWidget *table;
+	if (vertical)
+	    table = gtk_table_new(cpus, 1, TRUE); // rows, columns, homogenuous
+	else
+	    table = gtk_table_new(1, cpus, TRUE); // rows, columns, homogenuous
 	gtk_table_set_row_spacings(GTK_TABLE(table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 	gtk_container_add(GTK_CONTAINER(window), table);
@@ -206,22 +218,46 @@ int main(int argc, char *argv[]) {
 	    // frame with gpu id
 	    GtkWidget *frame = gtk_frame_new(tmp);
 	    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+
+
+
 	    // put gpu frame to table
-	    gtk_table_attach_defaults(GTK_TABLE(table), frame, i, i+1, 0, 1); // left, right, top, bottom
+	    if (vertical)
+		gtk_table_attach_defaults(GTK_TABLE(table), frame, 0, 1, i, i+1); // left, right, top, bottom
+	    else
+		gtk_table_attach_defaults(GTK_TABLE(table), frame, i, i+1, 0, 1); // left, right, top, bottom
 
 	    // an inner table within the frame (the table keeps the frames+labels for "memory" etc
-	    GtkWidget *innertable = gtk_table_new(cbdata.infos.size(), 1, TRUE); // rows, columns, homogenuous
+	    GtkWidget *innertable;
+	    if (vertical)
+		innertable = gtk_table_new(1, cbdata.infos.size(), TRUE); // rows, columns, homogenuous
+	    else
+		innertable = gtk_table_new(cbdata.infos.size(), 1, TRUE); // rows, columns, homogenuous
 	    gtk_container_add(GTK_CONTAINER(frame), innertable);    
 
 	    // we create inner frames with buttons for the information to be displayed
 	    for (unsigned x = 0; x < cbdata.infos.size(); ++x) {
 		// frame with label like "memory"
-		GtkWidget *iframe = gtk_frame_new(cbdata.infos[x]); //infos[x]);
+		GtkWidget *iframe = gtk_frame_new(NULL); //cbdata.infos[x]);
+		//gint w, h;
+		//gtk_widget_get_size_request (frame, &w, &h);
+		//cerr << w << " " << h << endl;
+		gtk_widget_set_size_request (iframe, 80, -1); // we don't modify the frame's height
+
+		if (!compact) gtk_frame_set_label(GTK_FRAME(iframe), cbdata.infos[x]);
+
 		gtk_frame_set_shadow_type(GTK_FRAME(iframe), GTK_SHADOW_ETCHED_IN);
 
-		if (i != 0 || cbdata.infos[x][0] != 't') {
+		//gtk_frame_set_label_align (GTK_FRAME(iframe), 0.0, 0.5);
+
+		if (cbdata.infos[x][0] == 't' && (i == 0 || i >= ci.getCores())) {
+		} else {
+		//if (i != 0 || cbdata.infos[x][0] != 't') {
 		    // we do not need temperature for the first column (cpu total)
-		    gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, 0, 1, x, x+1); // left, right, top, bottom
+		    if (vertical)
+			gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, x, x+1, 0, 1); // left, right, top, bottom
+		    else
+			gtk_table_attach_defaults(GTK_TABLE(innertable), iframe, 0, 1, x, x+1); // left, right, top, bottom
 		}
 		// the button with the information (replaces a label which does not have background color)
 		GtkWidget *label = gtk_button_new();
@@ -229,6 +265,7 @@ int main(int argc, char *argv[]) {
 		cbdata.labels[cbdata.infos[x]].push_back(label);
 		gtk_container_add(GTK_CONTAINER(iframe), label); 
 	    }
+
 	}
 
 	// destroy applicatation when window is closed
