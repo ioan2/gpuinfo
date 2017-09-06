@@ -48,6 +48,7 @@ class CpuInfo {
 
     /** get number of available CPUs as found in /proc/stat (including the total cpu line),*/
     unsigned int getCpus() { return cpus; }
+    unsigned int getCores() { return countCores; }
 
     /** get CPU time for user, system, nice and idle in per mille
 	@param user array of unsigned int of at least the number of cpus available
@@ -68,6 +69,9 @@ class CpuInfo {
     void read_proc_stat();
     /// number of CPUs available
     unsigned int cpus; 
+
+    /// number of Cores available (following /sys/class/hwmon/hwmonNN/[device/]name)
+    unsigned int countCores;
 
     /// stocks last /proc/stat entry
     unsigned int lastUser[MAX_CPU];

@@ -45,6 +45,9 @@ using namespace std;
 CpuInfo::CpuInfo() :
     cpus(0) {
     read_proc_stat();
+    for (unsigned int i = 0; i < cpus; ++i) {
+	lastTemp[i] = 0;
+    }
     read_sys();
 }
 
@@ -144,7 +147,12 @@ void CpuInfo::read_sys() {
 	msg << "/sys/class/hwmon/hwmon" << i << "/device/name";
 
 	string line;
-	if (!readSingleLineFile(msg.str(), line)) continue;
+	if (!readSingleLineFile(msg.str(), line)) {
+	    msg.str("");
+	    msg << "/sys/class/hwmon/hwmon" << i << "/name";
+
+	    if (!readSingleLineFile(msg.str(), line)) continue;
+	}
 
 	if (line == "coretemp") {
 	    path = msg.str().substr(0, msg.str().size()-4); // do not take the name bit
@@ -155,7 +163,7 @@ void CpuInfo::read_sys() {
     // we found the directory, now we read the temperature for cores
     if (!path.empty()) {
 	int j = 1;
-	unsigned int countCores = 1; // first cpu column is the total, so no equivalent for temperature
+	countCores = 1; // first cpu column is the total, so no equivalent for temperature
 	while(true) {
 	    ostringstream msg;
 	    msg << path << "temp" <<j << "_label";
