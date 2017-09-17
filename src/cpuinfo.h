@@ -57,18 +57,22 @@ class CpuInfo {
 	@param idle array of unsigned int of at least the number of cpus available
     */
     void getCPUtime(unsigned int *user, unsigned int *system, unsigned int *niced, unsigned int *idle);
-
     void getCoreTemp(unsigned int *temp);
 
     /** simple text output of cpu status */
     void out(ostream &out);
 
  private:
+    /** read frmom /sys */
     void read_sys();
 
+    /** read /proc/stat */
     void read_proc_stat();
     /// number of CPUs available
     unsigned int cpus; 
+
+    /** read /proc/cpuinfo */
+    void read_proc_cpuinfo();
 
     /// number of Cores available (following /sys/class/hwmon/hwmonNN/[device/]name)
     unsigned int countCores;
@@ -87,6 +91,11 @@ class CpuInfo {
     unsigned int diff_sum[MAX_CPU];
 
     unsigned int lastTemp[MAX_CPU];
+
+    /// information read from /proc/cpuinfo
+    unsigned int processor;
+    unsigned int cores;
+
 };
 
 #endif

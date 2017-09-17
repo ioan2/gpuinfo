@@ -48,6 +48,11 @@ CpuInfo::CpuInfo() :
     for (unsigned int i = 0; i < cpus; ++i) {
 	lastTemp[i] = 0;
     }
+
+    processor = 0;
+    cores = 0;
+
+    read_proc_cpuinfo();
     read_sys();
 }
 
@@ -84,6 +89,32 @@ void CpuInfo::getCPUtime(unsigned int *user, unsigned int *system, unsigned int 
     }
 }
 
+void CpuInfo::read_proc_cpuinfo() {
+    ifstream ifs("/proc/cpuinfo");
+    string line;
+
+    processor = 0;
+    cores = 0;
+    const char *lastcoreID = 0;
+
+    //char tmp[100];
+    //unsigned int ct = 0;
+    while(ifs) {
+	getline(ifs, line);
+	//cerr << "line: " << line << endl;
+	if (strncmp(line.c_str(), "processor", 9) == 0) {
+	    processor++;
+	    //cerr << "P " << processor << endl;
+	}
+	else if (strncmp(line.c_str(), "core id", 7) == 0) {
+	    const char *coreID = &line.c_str()[18];
+	    if (lastcoreID == 0 || strcmp(lastcoreID, coreID) != 0) {
+		cores++;
+		//cerr << "C " << cores << endl;
+	    }
+	}
+    }
+}
 
 void CpuInfo::read_proc_stat() {
     ifstream ifs("/proc/stat");
@@ -181,6 +212,7 @@ void CpuInfo::read_sys() {
 		countCores++;
 	    }
 	    j++;
+	    //if (countCores == 3) break; ///////
 	}
     }
 }
