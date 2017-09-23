@@ -73,7 +73,7 @@ gboolean time_handler(struct cb_data *cbdata) {
 	// for each piece of information
 	for (unsigned x = 0; x < cbdata->infos.size(); ++x) {
 	    // find label in cbdata
-	    if (cbdata->infos[x][0] == 't' && i >= cbdata->ci->getCores()) {
+	    if (cbdata->infos[x][0] == 't' && (i >= cbdata->ci->getCores() || i == 0)) {
 		// TODO can be much improved
 		// temperature is by core not by cpu, so top after all cores have their temp
 		continue;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 	     << "  -t  add time stamp" << endl
 	     << "  -l  log mode" << endl
 	     << endl;
-	    ;
+	;
     }
 
 
@@ -196,15 +196,15 @@ int main(int argc, char *argv[]) {
 	//printf("GTK+ version: %d.%d.%d\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
 	//printf("Glib version: %d.%d.%d\n", glib_major_version, glib_minor_version, glib_micro_version);
 
-	PangoFontDescription *pfd = pango_font_description_from_string("Serif 12");
+	//PangoFontDescription *pfd = pango_font_description_from_string("Serif 12");
 
 
 	// main window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	//gtk_window_set_default_size(GTK_WINDOW(window), 300, 100);
 	gtk_window_set_title(GTK_WINDOW(window), APPNAME);
-	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
-	gtk_container_set_border_width(GTK_CONTAINER(window), 5);
+	//gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
+	gtk_container_set_border_width(GTK_CONTAINER(window), 1);
 
 	// create main table (a column per core)
 	GtkWidget *maintable;
@@ -212,8 +212,8 @@ int main(int argc, char *argv[]) {
 	    maintable = gtk_table_new(ci.getCores(), 1, FALSE); // rows, columns, homogenuous
 	else
 	    maintable = gtk_table_new(1, ci.getCores(), FALSE); // rows, columns, homogenuous
-	gtk_table_set_row_spacings(GTK_TABLE(maintable), 5);
-	gtk_table_set_col_spacings(GTK_TABLE(maintable), 5);
+	gtk_table_set_row_spacings(GTK_TABLE(maintable), 2);
+	gtk_table_set_col_spacings(GTK_TABLE(maintable), 2);
 	gtk_container_add(GTK_CONTAINER(window), maintable);
 
 
@@ -253,27 +253,31 @@ int main(int argc, char *argv[]) {
 		    coretable = gtk_table_new(2, cpus_per_core, FALSE); // rows, columns, homogenuous
 		}
 	    }
-	    
-	    // put temperature frame in coretable
-	    GtkWidget *labelframe = gtk_frame_new(NULL);
-	    //gint w, h;
-	    //gtk_widget_get_size_request (frame, &w, &h);
-	    //cerr << w << " " << h << endl;
-	    gtk_widget_set_size_request (labelframe, 80, -1); // we don't modify the frame's height
 
-	    if (!compact) gtk_frame_set_label(GTK_FRAME(labelframe), "temperature");
-	    gtk_frame_set_shadow_type(GTK_FRAME(labelframe), GTK_SHADOW_ETCHED_IN);
-	    gtk_table_attach_defaults(GTK_TABLE(coretable), labelframe, 0, 2, 1, 2); // left, right, top, bottom
+	    if (co != 0) {
+		// put temperature frame in coretable
+		GtkWidget *labelframe = gtk_frame_new(NULL);
+		//gint w, h;
+		//gtk_widget_get_size_request (labelframe, &w, &h);
+		//cerr << w << " " << h << endl;
+		if (!compact) gtk_widget_set_size_request (labelframe, 95, -1); // we don't modify the frame's height
 
-	    GtkWidget *label = gtk_button_new();
-	    cbdata.labels["temperature"].push_back(label);
-	    gtk_container_add(GTK_CONTAINER(labelframe), label); 
+		if (!compact) gtk_frame_set_label(GTK_FRAME(labelframe), "temperature");
+		gtk_frame_set_shadow_type(GTK_FRAME(labelframe), GTK_SHADOW_ETCHED_IN);
+		gtk_table_attach_defaults(GTK_TABLE(coretable), labelframe, 0, 2, 1, 2); // left, right, top, bottom
 
+		GtkWidget *label = gtk_button_new();
+		cbdata.labels["temperature"].push_back(label);
+		gtk_container_add(GTK_CONTAINER(labelframe), label); 
+	    } else {
+		// no need to display a "total" temperature, so we put a null pointer here
+		cbdata.labels["temperature"].push_back(0);
+	    }
 
 	    // stock pointer to coretables for later usage
 	    coretables.push_back(coretable);
-	    gtk_table_set_row_spacings(GTK_TABLE(coretable), 5);
-	    gtk_table_set_col_spacings(GTK_TABLE(coretable), 5);
+	    gtk_table_set_row_spacings(GTK_TABLE(coretable), 1);
+	    gtk_table_set_col_spacings(GTK_TABLE(coretable), 1);
 	    // add coretable to coreframe
 	    gtk_container_add(GTK_CONTAINER(coreframe), coretable);
 	}
@@ -284,6 +288,7 @@ int main(int argc, char *argv[]) {
 	    else sprintf(tmp, "cpu: %d", i-1);
 	    // frame with gpu id
 	    GtkWidget *cpuframe = gtk_frame_new(tmp);
+
 	    gtk_frame_set_shadow_type(GTK_FRAME(cpuframe), GTK_SHADOW_ETCHED_IN);
 
 
@@ -302,7 +307,7 @@ int main(int argc, char *argv[]) {
 	    //if (vertical)
 	    //	gtk_table_attach_defaults(GTK_TABLE(coretable), cpuframe, 0, 1, startcol, startcol+1); // left, right, top, bottom
 	    // else
-		gtk_table_attach_defaults(GTK_TABLE(coretable), cpuframe, startcol, startcol+1, 0, 1); // left, right, top, bottom
+	    gtk_table_attach_defaults(GTK_TABLE(coretable), cpuframe, startcol, startcol+1, 0, 1); // left, right, top, bottom
 
 	    // an inner table within the cpuframe (the table keeps the frames+labels for "memory" etc
 	    GtkWidget *innertable;
@@ -321,7 +326,7 @@ int main(int argc, char *argv[]) {
 		//gint w, h;
 		//gtk_widget_get_size_request (frame, &w, &h);
 		//cerr << w << " " << h << endl;
-		gtk_widget_set_size_request (labelframe, 80, -1); // we don't modify the frame's height
+		if (!compact) gtk_widget_set_size_request (labelframe, 80, -1); // we don't modify the frame's height
 
 		if (!compact) gtk_frame_set_label(GTK_FRAME(labelframe), cbdata.infos[x]);
 
@@ -330,23 +335,23 @@ int main(int argc, char *argv[]) {
 		//gtk_frame_set_label_align (GTK_FRAME(labelframe), 0.0, 0.5);
 
 		//if (cbdata.infos[x][0] == 't' && 
-		//    (i == 0)) {// || i >= ci.getCores())) {
-		    // we do not need temperature for the first column (cpu total)
+		//	if   (i != 0) {// || i >= ci.getCores())) {
+		// we do not need temperature for the first column (cpu total)
 		//} else {
 		//if (cbdata.infos[x][0] == 't') {
-		    //} else {
-		    if (vertical)
-			gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, x, x+1, 0, 1); // left, right, top, bottom
-		    else
-			gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, 0, 1, x, x+1); // left, right, top, bottom
-		    //}
+		//} else {
+		if (vertical)
+		    gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, x, x+1, 0, 1); // left, right, top, bottom
+		else
+		    gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, 0, 1, x, x+1); // left, right, top, bottom
+		//}
 		//}
 		// the button with the information (replaces a label which does not have background color)
 		GtkWidget *label = gtk_button_new();
 
 		//cerr << "PFD " << pfd << " " << pango_font_description_to_string(pfd) << endl;
 		//gtk_widget_modify_font(GTK_WIDGET(label), pfd);
-
+		//gtk_widget_set_size_request (label, 80, 40); // we don't modify the frame's height
 
 		cbdata.labels[cbdata.infos[x]].push_back(label);
 		gtk_container_add(GTK_CONTAINER(labelframe), label); 
@@ -375,21 +380,21 @@ int main(int argc, char *argv[]) {
 
     else {
 	while(true) {
-	  if (timest) {
-	      timestamp(cerr);	  
-	  }
+	    if (timest) {
+		timestamp(cerr);	  
+	    }
 
-	  if (!logmode) {
-	      cerr << '\r';
-	      for (unsigned int i = 0; i < cpus; ++i) {
-		  cerr << "          \t";
-	      }
-	      cerr << '\r';
-	  }
-	  ci.out(cerr);
-	  if (logmode)
-	      cerr <<endl;
-	  usleep(delay*1000);
+	    if (!logmode) {
+		cerr << '\r';
+		for (unsigned int i = 0; i < cpus; ++i) {
+		    cerr << "          \t";
+		}
+		cerr << '\r';
+	    }
+	    ci.out(cerr);
+	    if (logmode)
+		cerr <<endl;
+	    usleep(delay*1000);
 	}
 
     }

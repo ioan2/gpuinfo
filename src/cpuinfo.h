@@ -64,10 +64,10 @@ class CpuInfo {
     void out(ostream &out);
 
  private:
-    /** read frmom /sys */
+    /** read from /sys (current temperatures) */
     void read_sys();
 
-    /** read /proc/stat */
+    /** read /proc/stat (current cpu load) */
     void read_proc_stat();
     /// number of CPUs available
     unsigned int cpus; 
