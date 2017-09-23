@@ -171,28 +171,30 @@ void CpuInfo::read_proc_stat() {
 
 void CpuInfo::read_sys() {
     int i = 0;
-    string path;
-    // find the correct directory with core temperature information
-    for (; i < 4; ++i) {
-	ostringstream msg;
-	msg << "/sys/class/hwmon/hwmon" << i << "/device/name";
 
-	string line;
-	if (!readSingleLineFile(msg.str(), line)) {
-	    msg.str("");
-	    msg << "/sys/class/hwmon/hwmon" << i << "/name";
+    if (path.empty()) {
+	// find the correct directory with core temperature information
+	for (; i < 4; ++i) {
+	    ostringstream msg;
+	    msg << "/sys/class/hwmon/hwmon" << i << "/device/name";
 
-	    if (!readSingleLineFile(msg.str(), line)) continue;
-	}
+	    string line;
+	    if (!readSingleLineFile(msg.str(), line)) {
+		msg.str("");
+		msg << "/sys/class/hwmon/hwmon" << i << "/name";
 
-	if (line == "coretemp") {
-	    path = msg.str().substr(0, msg.str().size()-4); // do not take the name bit
-	    break;
-	}
-    } 
+		if (!readSingleLineFile(msg.str(), line)) continue;
+	    }
 
-    // we found the directory, now we read the temperature for cores
+	    if (line == "coretemp") {
+		path = msg.str().substr(0, msg.str().size()-4); // do not take the name bit
+		break;
+	    }
+	} 
+    }
+
     if (!path.empty()) {
+	// we found the directory, now we read the temperature for cores
 	int j = 1;
 	countCores = 1; // first cpu column is the total, so no equivalent for temperature
 	while(true) {

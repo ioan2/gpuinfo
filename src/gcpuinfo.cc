@@ -113,6 +113,7 @@ gboolean time_handler(struct cb_data *cbdata) {
 	    getHeatMapColor(val/1000.0, color);
 	    gtk_widget_modify_bg(label, GTK_STATE_NORMAL, &color);
 
+
 	    //GdkColor color;
 	    //gdk_color_parse ("white", &color);
 	    //gtk_widget_modify_text(label, GTK_STATE_NORMAL, &color);
@@ -195,6 +196,8 @@ int main(int argc, char *argv[]) {
 	//printf("GTK+ version: %d.%d.%d\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
 	//printf("Glib version: %d.%d.%d\n", glib_major_version, glib_minor_version, glib_micro_version);
 
+	PangoFontDescription *pfd = pango_font_description_from_string("Serif 12");
+
 
 	// main window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -227,6 +230,7 @@ int main(int argc, char *argv[]) {
 	    else sprintf(tmp, "core: %d", co-1);
 	    GtkWidget *coreframe = gtk_frame_new(tmp);
 	    gtk_frame_set_shadow_type(GTK_FRAME(coreframe), GTK_SHADOW_ETCHED_IN);
+
 	    // put core frame to main table
 	    if (vertical)
 		gtk_table_attach_defaults(GTK_TABLE(maintable), coreframe, 0, 1, co, co+1); // left, right, top, bottom
@@ -281,6 +285,7 @@ int main(int argc, char *argv[]) {
 	    // frame with gpu id
 	    GtkWidget *cpuframe = gtk_frame_new(tmp);
 	    gtk_frame_set_shadow_type(GTK_FRAME(cpuframe), GTK_SHADOW_ETCHED_IN);
+
 
 	    // put gpu frame to table
 	    GtkWidget *coretable;
@@ -338,13 +343,17 @@ int main(int argc, char *argv[]) {
 		//}
 		// the button with the information (replaces a label which does not have background color)
 		GtkWidget *label = gtk_button_new();
-		//PangoFontDescription *p = pango_font_description_from_string("Serif 10");
-		//gtk_widget_modify_font(label, p);
+
+		//cerr << "PFD " << pfd << " " << pango_font_description_to_string(pfd) << endl;
+		//gtk_widget_modify_font(GTK_WIDGET(label), pfd);
+
+
 		cbdata.labels[cbdata.infos[x]].push_back(label);
 		gtk_container_add(GTK_CONTAINER(labelframe), label); 
 	    }
 
 	}
+	//pango_font_description_free(pfd);
 	
 	// destroy applicatation when window is closed
 	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), G_OBJECT(window));

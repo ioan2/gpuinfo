@@ -36,6 +36,7 @@ are permitted provided that the following conditions are met:
 
 using std::ostream;
 using std::endl;
+using std::string;
 
 // maximal number of CPUs we can handle (-1, since 0 is the sum of all cpus)
 #define MAX_CPU 128
@@ -95,7 +96,9 @@ class CpuInfo {
     /// information read from /proc/cpuinfo
     unsigned int processor;
     unsigned int cores;
-
+    
+    /// path to the tempN_input files
+    string path;
 };
 
 #endif
