@@ -99,21 +99,30 @@ void CpuInfo::read_proc_cpuinfo() {
 
     //char tmp[100];
     //unsigned int ct = 0;
+    int current_cpu;
+    int current_core;
     while(ifs) {
 	getline(ifs, line);
 	//cerr << "line: " << line << endl;
 	if (strncmp(line.c_str(), "processor", 9) == 0) {
+	    const char *cpuID = &line.c_str()[12];
+	    current_cpu = atoi(cpuID);
 	    processor++;
-	    //cerr << "P " << processor << endl;
+	    //cerr << "P " << processor << " :" << cpuID << ":" << endl;
 	}
 	else if (strncmp(line.c_str(), "core id", 7) == 0) {
-	    const char *coreID = &line.c_str()[18];
+	    const char *coreID = &line.c_str()[11];
+	    current_core = atoi(coreID);
+	    cpu_in_core[current_cpu] = current_core;
 	    if (lastcoreID == 0 || strcmp(lastcoreID, coreID) != 0) {
 		cores++;
-		//cerr << "C " << cores << endl;
+		//cerr << "C " << cores << " :" << coreID << ":" << endl;		
 	    }
 	}
     }
+    //for (map<int,int>::iterator it = cpu_in_core.begin(); it != cpu_in_core.end(); ++it) {
+    //cerr << it->first << " " << it->second << endl;
+    //}
 }
 
 void CpuInfo::read_proc_stat() {

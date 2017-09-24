@@ -32,6 +32,21 @@ add_executable (gcpuinfo ${gcpuinfo_src} gcpuinfo.cc)
 target_link_libraries(gcpuinfo ${GTK2_LIBRARIES})
 install (TARGETS gcpuinfo DESTINATION bin)
 
+
+set(gcpuinfo2_src
+  utils.cc
+  utils.h
+  cpuinfo.cc
+  cpuinfo.h
+  widgets.h
+  widgets.cc
+  )
+add_executable (gcpuinfo2 ${gcpuinfo2_src} gcpuinfo2.cc)
+target_link_libraries(gcpuinfo2 ${GTK2_LIBRARIES})
+install (TARGETS gcpuinfo2 DESTINATION bin)
+
+
+
 if (CUDA_FOUND)
   set(ggpuinfo_src
     utils.cc

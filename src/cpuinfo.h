@@ -33,10 +33,12 @@ are permitted provided that the following conditions are met:
 #define __CPUINFO_H__
 
 #include <iostream>
+#include <map>
 
 using std::ostream;
 using std::endl;
 using std::string;
+using std::map;
 
 // maximal number of CPUs we can handle (-1, since 0 is the sum of all cpus)
 #define MAX_CPU 128
@@ -60,8 +62,14 @@ class CpuInfo {
     void getCPUtime(unsigned int *user, unsigned int *system, unsigned int *niced, unsigned int *idle);
     void getCoreTemp(unsigned int *temp);
 
+    int getCore(int cpu) {
+	return cpu_in_core[cpu]; 
+    }
+
     /** simple text output of cpu status */
     void out(ostream &out);
+
+    
 
  private:
     /** read from /sys (current temperatures) */
@@ -74,6 +82,10 @@ class CpuInfo {
 
     /** read /proc/cpuinfo */
     void read_proc_cpuinfo();
+
+    /** gives the core id for each cpu id */
+    map<int, int>cpu_in_core;
+
 
     /// number of Cores available (following /sys/class/hwmon/hwmonNN/[device/]name)
     unsigned int countCores;
