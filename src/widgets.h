@@ -46,6 +46,7 @@ class FieldsGroup {
     ~FieldsGroup();
     /** add an infofield to the fieldsgroup */
     void add(int ix, InfoField *ifd);
+    void add(int ix, GtkWidget *ifd);
 
     /** return main widget in order to pack it somewhere */
     GtkWidget *getWidget() {

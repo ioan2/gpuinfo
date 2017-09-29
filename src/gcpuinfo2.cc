@@ -173,22 +173,34 @@ int main(int argc, char *argv[]) {
 	GtkWidget *maintable;
 	if (vertical)
 	    maintable = gtk_table_new(cpus, 2, FALSE); // rows, columns, homogenuous
-	else
-	    maintable = gtk_table_new(2, cpus, FALSE); // rows, columns, homogenuous
+	else {
+	    // first column for headers
+	    maintable = gtk_table_new(2, cpus+1, FALSE); // rows, columns, homogenuous
+	}
 	gtk_table_set_row_spacings(GTK_TABLE(maintable), 2);
 	gtk_table_set_col_spacings(GTK_TABLE(maintable), 2);
 	gtk_container_add(GTK_CONTAINER(window), maintable);
 
 	char tmp[70];
 
+// 	// create headers
+//   	if (!compact) {
+//   	    GtkWidget *label = gtk_label_new("temperature");
+// 	    gtk_label_set_angle(GTK_LABEL(label), 90);
+//   	    // left, right, top, bottom
+//   	    gtk_table_attach_defaults(GTK_TABLE(maintable), label, 
+//   				      0, 1,
+//   				      0, 1);
+//   	}
+
 	// create core infos
-	int offset = 1;
+	int offset = 2; // headers, total column
 	for (unsigned int i = 0; i < cores-1; ++i) {
 	    sprintf(tmp, "core %d:", i);
 	    FieldsGroup *fg = new FieldsGroup(tmp, vertical);
 	    cbdata.core_fgs.push_back(fg);
 	    const char *name = 0;
-	    if (!compact) name = "temperature";
+	    if (!compact && i == 0) name = "temperature";
 
 	    fg->add('t', new InfoField(name, "%.fC", vertical, progressbar));
 	    fg->setValue('t', 40);
@@ -200,6 +212,7 @@ int main(int argc, char *argv[]) {
 					  offset + i*cpus_par_core, offset + (i+1)*cpus_par_core);
 	    } else {
 		// left, right, top, bottom
+
 		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(), 
 					  offset + i*cpus_par_core, offset + (i+1)*cpus_par_core,
 					  0, 1);
@@ -216,11 +229,11 @@ int main(int argc, char *argv[]) {
 		//cerr << i << " core: " << ci.getCore(i-1) << endl;
 	    }
 	    int currentcore = ci.getCore(i-1);
-	    
-	    int column = 0;
-	    if (i != 0) column = 1+ currentcore*cpus_par_core +  (i-1)/(cores-1);
+	    int offset = 1;
+	    int column = offset; // with headers
+	    if (i != 0) column = offset + 1 + currentcore*cpus_par_core +  (i-1)/(cores-1);
 
-	    cerr << i << " " << (i-1) % 2<< " xxx: " << " " << currentcore << " " << column << endl;
+	    //cerr << i << " " << (i-1) % 2<< " xxx: " << " " << currentcore << " " << column << endl;
 	    FieldsGroup *fg = new FieldsGroup(tmp, vertical);
 	    cbdata.cpu_fgs.push_back(fg);
 	    if (vertical) {
@@ -231,16 +244,16 @@ int main(int argc, char *argv[]) {
 		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(), column, column+1, 1, 2);
 	    }
 	    const char *name = 0;
-	    if (!compact) name = "user";
+	    if (!compact && i == 0) name = "user";
 	    fg->add('u', new InfoField(name, "%.1f%%", vertical, progressbar));
 	    //fg->setValue('u', 20.0);
 
 	    if (showniced) {
-		if (!compact) name = "niced";
+		if (!compact && i == 0) name = "niced";
 		fg->add('n', new InfoField(name, "%.1f%%", vertical, progressbar));
 		fg->setValue('n', 40);
 	    }
-	    if (!compact) name = "system";
+	    if (!compact && i == 0) name = "system";
 	    fg->add('s', new InfoField(name, "%.1f%%", vertical, progressbar));
 	    fg->setValue('s', 30);
 	}
