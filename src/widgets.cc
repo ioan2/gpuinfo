@@ -37,7 +37,9 @@ InfoField::InfoField(const char *name, const string &format, bool vertical, bool
     else {
 	info = gtk_button_new();
 	if (vertical)
-	    gtk_widget_set_size_request(info, 70, -1);
+	    gtk_widget_set_size_request(info, 80, -1);
+	else
+	    gtk_widget_set_size_request(info, 80, -1);
     }
     //#endif
 
