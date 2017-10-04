@@ -23,14 +23,14 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(gcpuinfo_src
+set(gcpuinfo_cl_src
   utils.cc
   cpuinfo.cc
   utils.h
   cpuinfo.h)
-add_executable (gcpuinfo ${gcpuinfo_src} gcpuinfo.cc)
-target_link_libraries(gcpuinfo ${GTK2_LIBRARIES})
-install (TARGETS gcpuinfo DESTINATION bin)
+add_executable (gcpuinfo_classic ${gcpuinfo_cl_src} gcpuinfo_classic.cc)
+target_link_libraries(gcpuinfo_classic ${GTK2_LIBRARIES})
+install (TARGETS gcpuinfo_classic DESTINATION bin)
 
 
 set(gcpuinfo2_src
@@ -41,9 +41,9 @@ set(gcpuinfo2_src
   widgets.h
   widgets.cc
   )
-add_executable (gcpuinfo2 ${gcpuinfo2_src} gcpuinfo2.cc)
-target_link_libraries(gcpuinfo2 ${GTK2_LIBRARIES})
-install (TARGETS gcpuinfo2 DESTINATION bin)
+add_executable (gcpuinfo ${gcpuinfo2_src} gcpuinfo.cc)
+target_link_libraries(gcpuinfo ${GTK2_LIBRARIES})
+install (TARGETS gcpuinfo DESTINATION bin)
 
 
 

@@ -25,7 +25,7 @@ are permitted provided that the following conditions are met:
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  Author: Johannes Heinecke
- Version:  1.0 as of 2nd September 2017
+ Version:  1.0 as of 24th September 2017
 */
 
 #include <iostream>
@@ -40,6 +40,7 @@ are permitted provided that the following conditions are met:
 
 #include "cpuinfo.h"
 #include "utils.h"
+#include "widgets.h"
 
 #define APPNAME "cgpuinfo"
 
@@ -48,78 +49,37 @@ using namespace std;
 
 
 /** structure to give information to callback */
-struct cb_data {
-    CpuInfo *ci;
-    vector<const char *>infos;
-    map<const char *, vector<GtkWidget *> > labels;
-};
+//struct cb_data {
+//    CpuInfo *ci;
+//   vector<FieldsGroup *>fgs;
+    //vector<const char *>infos;
+    //map<const char *, vector<GtkWidget *> > labels;
+//};
 
 /* TODO:
    process cpu - core correctly (which cpu on which core)
  */
 
 /** used to update labels */
-gboolean time_handler(struct cb_data *cbdata) {
+gboolean time_handler(CallBackDataCPU *cbdata) {
     unsigned int u[MAX_CPU], s[MAX_CPU], n[MAX_CPU], i[MAX_CPU], t[MAX_CPU];
     cbdata->ci->getCPUtime(u, s, n, i);
     cbdata->ci->getCoreTemp(t);
     
-    unsigned int cpus = cbdata->ci->getCpus();
-
-    // for each gpu device
-    for(unsigned int i = 0; i < cpus; ++i) {
-	char tmp[100];
-
-	// for each piece of information
-	for (unsigned x = 0; x < cbdata->infos.size(); ++x) {
-	    // find label in cbdata
-	    if (cbdata->infos[x][0] == 't' && (i >= cbdata->ci->getCores() || i == 0)) {
-		// TODO can be much improved
-		// temperature is by core not by cpu, so top after all cores have their temp
-		continue;
-	    }
-	    GtkWidget *label = cbdata->labels[cbdata->infos[x]][i];
-
-	    unsigned int val = 0;
-	    // get correct values to display
-	    switch (cbdata->infos[x][0]) {
-	    case 'u':
-		sprintf(tmp, "%.1f%%", u[i]/10.0);
-		val = u[i];
-		break;
-
-	    case 'n':
-		sprintf(tmp, "%.1f%%", n[i]/10.0);
-		val = n[i];
-		break;
-
-	    case 's':
-		sprintf(tmp, "%.1f%%", s[i]/10.0);
-		val = s[i];
-		break;
-
-	    case 't':
-		sprintf(tmp, "%dC", t[i]/1000);
-		val = t[i]/100;
-		break;
-
-	    }
-
-	    // update button label (we use buttons, since labels do not have background colors)
-	    gtk_button_set_label((GtkButton*)label, tmp);
-
-	    // update background colour
-	    GdkColor color;
-	    getHeatMapColor(val/1000.0, color);
-	    gtk_widget_modify_bg(label, GTK_STATE_NORMAL, &color);
-
-
-	    //GdkColor color;
-	    //gdk_color_parse ("white", &color);
-	    //gtk_widget_modify_text(label, GTK_STATE_NORMAL, &color);
-
-	}
+    unsigned int x = 0;
+    for (vector<FieldsGroup *>::iterator it = cbdata->cpu_fgs.begin(); it != cbdata->cpu_fgs.end(); ++it, ++x) {
+	// pour tous les FieldsGroup des CPU
+	(*it)->setValue('u', u[x]/10.0);
+	(*it)->setValue('n', n[x]/10.0);
+	(*it)->setValue('s', s[x]/10.0);
     }
+
+    x = 1;
+    for (vector<FieldsGroup *>::iterator it = cbdata->core_fgs.begin(); it != cbdata->core_fgs.end(); ++it, ++x) {
+
+	(*it)->setValue('t', t[x]/1000.0);
+    }
+
     return TRUE;
 }
 
@@ -134,6 +94,7 @@ int main(int argc, char *argv[]) {
 	     << "  --nn do not show niced" << endl
 	     << "  -v vertical layout" << endl
 	     << "  -c compact view (no labels)" << endl
+	     << " -p progressbar view" << endl
 	     << "\n with -T" <<endl
 	     << "  -t  add time stamp" << endl
 	     << "  -l  log mode" << endl
@@ -148,6 +109,7 @@ int main(int argc, char *argv[]) {
     bool timest = false;
     bool showniced = true;
     bool vertical = false;
+    bool progressbar = false;
     bool compact = false;
 
     for (int i = 1; i<argc; ++i) {
@@ -164,6 +126,8 @@ int main(int argc, char *argv[]) {
 	    textonly = true;
 	} else if (strcmp(argv[i], "-c") == 0) {
 	    compact = true;
+	} else if (strcmp(argv[i], "-p") == 0) {
+	    progressbar = true; 
 	} else if (strcmp(argv[i], "-v") == 0) {
 	    vertical = true; 
 	} else if (strcmp(argv[i], "--nn") == 0) {
@@ -180,16 +144,15 @@ int main(int argc, char *argv[]) {
 
 
     CpuInfo ci;
-    unsigned int cpus = ci.getCpus();
-   
+    unsigned int cpus = ci.getCpus(); // cpu number + 1 (total)
+    unsigned int cores = ci.getCores(); // core number + 1
+
+    unsigned int cpus_par_core = (cpus-1)/(cores-1);
+
     if (!textonly) {
 	// initialise cbdata
-	struct cb_data cbdata;
+	CallBackDataCPU cbdata;
 	cbdata.ci = &ci;
-	cbdata.infos.push_back("user");
-	if (showniced) cbdata.infos.push_back("niced");
-	cbdata.infos.push_back("system");
-	cbdata.infos.push_back("temperature");
 
 	gtk_init(&argc, &argv);
 
@@ -209,155 +172,92 @@ int main(int argc, char *argv[]) {
 	// create main table (a column per core)
 	GtkWidget *maintable;
 	if (vertical)
-	    maintable = gtk_table_new(ci.getCores(), 1, FALSE); // rows, columns, homogenuous
-	else
-	    maintable = gtk_table_new(1, ci.getCores(), FALSE); // rows, columns, homogenuous
+	    maintable = gtk_table_new(cpus, 2, FALSE); // rows, columns, homogenuous
+	else {
+	    // first column for headers
+	    maintable = gtk_table_new(2, cpus+1, FALSE); // rows, columns, homogenuous
+	}
 	gtk_table_set_row_spacings(GTK_TABLE(maintable), 2);
 	gtk_table_set_col_spacings(GTK_TABLE(maintable), 2);
 	gtk_container_add(GTK_CONTAINER(window), maintable);
 
-
-	
 	char tmp[70];
 
-	vector<GtkWidget *>coretables;
-	unsigned int cpus_per_core = (cpus-1)/(ci.getCores()-1);
+// 	// create headers
+//   	if (!compact) {
+//   	    GtkWidget *label = gtk_label_new("temperature");
+// 	    gtk_label_set_angle(GTK_LABEL(label), 90);
+//   	    // left, right, top, bottom
+//   	    gtk_table_attach_defaults(GTK_TABLE(maintable), label, 
+//   				      0, 1,
+//   				      0, 1);
+//   	}
 
-	// create a frame for each core and put it to the maintable
-	for (unsigned int co = 0; co < ci.getCores(); ++co) {
-	    if (co == 0) //sprintf(tmp, "total");
-		tmp[0] = '\0';
-	    else sprintf(tmp, "core: %d", co-1);
-	    GtkWidget *coreframe = gtk_frame_new(tmp);
-	    gtk_frame_set_shadow_type(GTK_FRAME(coreframe), GTK_SHADOW_ETCHED_IN);
+	// create core infos
+	int offset = 2; // headers, total column
+	for (unsigned int i = 0; i < cores-1; ++i) {
+	    sprintf(tmp, "core %d:", i);
+	    FieldsGroup *fg = new FieldsGroup(tmp, vertical);
+	    cbdata.core_fgs.push_back(fg);
+	    const char *name = 0;
+	    if (!compact && i == 0) name = "temperature";
 
-	    // put core frame to main table
-	    if (vertical)
-		gtk_table_attach_defaults(GTK_TABLE(maintable), coreframe, 0, 1, co, co+1); // left, right, top, bottom
-	    else
-		gtk_table_attach_defaults(GTK_TABLE(maintable), coreframe, co, co+1, 0, 1); // left, right, top, bottom
+	    fg->add('t', new InfoField(name, "%.fC", vertical, progressbar));
+	    fg->setValue('t', 40);
 
-
-	    // create coretable (n columns per core, except the first table, which has just one column)
-	    GtkWidget *coretable;
-	    if (co == 0) {
-		coretable = gtk_table_new(2, 1, FALSE); // rows, columns, homogenuous
-	    }
-	    else {
-		//cerr << "cpu/score " << cpus_per_core << endl;
-		if (vertical) {
-		    // second column for temperature (which is not in cpu frame)
-		    coretable = gtk_table_new(cpus_per_core, 2, FALSE); // rows, columns, homogenuous
-		} else {
-		    // second row for temperature (which is not in cpu frame)
-		    coretable = gtk_table_new(2, cpus_per_core, FALSE); // rows, columns, homogenuous
-		}
-	    }
-
-	    if (co != 0) {
-		// put temperature frame in coretable
-		GtkWidget *labelframe = gtk_frame_new(NULL);
-		//gint w, h;
-		//gtk_widget_get_size_request (labelframe, &w, &h);
-		//cerr << w << " " << h << endl;
-		if (!compact) gtk_widget_set_size_request (labelframe, 95, -1); // we don't modify the frame's height
-
-		if (!compact) gtk_frame_set_label(GTK_FRAME(labelframe), "temperature");
-		gtk_frame_set_shadow_type(GTK_FRAME(labelframe), GTK_SHADOW_ETCHED_IN);
-		gtk_table_attach_defaults(GTK_TABLE(coretable), labelframe, 0, 2, 1, 2); // left, right, top, bottom
-
-		GtkWidget *label = gtk_button_new();
-		cbdata.labels["temperature"].push_back(label);
-		gtk_container_add(GTK_CONTAINER(labelframe), label); 
+	    if (vertical) {
+		// left, right, top, bottom
+		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(),
+					  0, 1, 
+					  offset + i*cpus_par_core, offset + (i+1)*cpus_par_core);
 	    } else {
-		// no need to display a "total" temperature, so we put a null pointer here
-		cbdata.labels["temperature"].push_back(0);
-	    }
+		// left, right, top, bottom
 
-	    // stock pointer to coretables for later usage
-	    coretables.push_back(coretable);
-	    gtk_table_set_row_spacings(GTK_TABLE(coretable), 1);
-	    gtk_table_set_col_spacings(GTK_TABLE(coretable), 1);
-	    // add coretable to coreframe
-	    gtk_container_add(GTK_CONTAINER(coreframe), coretable);
+		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(), 
+					  offset + i*cpus_par_core, offset + (i+1)*cpus_par_core,
+					  0, 1);
+	    }
+	    
 	}
 
-	// create cpu frames
+	//cerr << "cpc " << cpus_par_core << endl;
+	// create cpu infos
 	for (unsigned int i = 0; i < cpus; ++i) {
-	    if (i == 0) sprintf(tmp, "cpu: total");
-	    else sprintf(tmp, "cpu: %d", i-1);
-	    // frame with gpu id
-	    GtkWidget *cpuframe = gtk_frame_new(tmp);
-
-	    gtk_frame_set_shadow_type(GTK_FRAME(cpuframe), GTK_SHADOW_ETCHED_IN);
-
-
-	    // put gpu frame to table
-	    GtkWidget *coretable;
-	    int startcol = 0;
-	    if (i == 0) coretable = coretables[0];
+	    if (i == 0) sprintf(tmp, "total:");
 	    else {
-		//cerr << "aaaa " << i << " " << (1+((i-1)/cpus_per_core)) << endl;
-		//coretable = coretables[1+((i-1)/cpus_per_core)];
-
-		coretable = coretables[1+((i-1) % (ci.getCores()-1))];
-		startcol = (i-1) / (ci.getCores()-1);
-		//cerr << "aaaa " << i << " " << (1+((i-1) % (ci.getCores()-1))) << " " << startcol << endl;
+		sprintf(tmp, "cpu %d:", i-1);
+		//cerr << i << " core: " << ci.getCore(i-1) << endl;
 	    }
-	    //if (vertical)
-	    //	gtk_table_attach_defaults(GTK_TABLE(coretable), cpuframe, 0, 1, startcol, startcol+1); // left, right, top, bottom
-	    // else
-	    gtk_table_attach_defaults(GTK_TABLE(coretable), cpuframe, startcol, startcol+1, 0, 1); // left, right, top, bottom
+	    int currentcore = ci.getCore(i-1);
+	    int offset = 1;
+	    int column = offset; // with headers
+	    if (i != 0) column = offset + 1 + currentcore*cpus_par_core +  (i-1)/(cores-1);
 
-	    // an inner table within the cpuframe (the table keeps the frames+labels for "memory" etc
-	    GtkWidget *innertable;
-	    // -1 beacause temperature is displayed in coreframe/table
-	    if (vertical)
-		innertable = gtk_table_new(1, cbdata.infos.size()-1, FALSE); // rows, columns, homogenuous
-	    else
-		innertable = gtk_table_new(cbdata.infos.size()-1, 1, FALSE); // rows, columns, homogenuous
-	    gtk_container_add(GTK_CONTAINER(cpuframe), innertable);    
-
-	    // we create inner frames with buttons for the information to be displayed
-	    for (unsigned x = 0; x < cbdata.infos.size(); ++x) {
-		if (cbdata.infos[x][0] == 't') continue;
-		// frame with label like "memory"
-		GtkWidget *labelframe = gtk_frame_new(NULL); //cbdata.infos[x]);
-		//gint w, h;
-		//gtk_widget_get_size_request (frame, &w, &h);
-		//cerr << w << " " << h << endl;
-		if (!compact) gtk_widget_set_size_request (labelframe, 80, -1); // we don't modify the frame's height
-
-		if (!compact) gtk_frame_set_label(GTK_FRAME(labelframe), cbdata.infos[x]);
-
-		gtk_frame_set_shadow_type(GTK_FRAME(labelframe), GTK_SHADOW_ETCHED_IN);
-
-		//gtk_frame_set_label_align (GTK_FRAME(labelframe), 0.0, 0.5);
-
-		//if (cbdata.infos[x][0] == 't' && 
-		//	if   (i != 0) {// || i >= ci.getCores())) {
-		// we do not need temperature for the first column (cpu total)
-		//} else {
-		//if (cbdata.infos[x][0] == 't') {
-		//} else {
-		if (vertical)
-		    gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, x, x+1, 0, 1); // left, right, top, bottom
-		else
-		    gtk_table_attach_defaults(GTK_TABLE(innertable), labelframe, 0, 1, x, x+1); // left, right, top, bottom
-		//}
-		//}
-		// the button with the information (replaces a label which does not have background color)
-		GtkWidget *label = gtk_button_new();
-
-		//cerr << "PFD " << pfd << " " << pango_font_description_to_string(pfd) << endl;
-		//gtk_widget_modify_font(GTK_WIDGET(label), pfd);
-		//gtk_widget_set_size_request (label, 80, 40); // we don't modify the frame's height
-
-		cbdata.labels[cbdata.infos[x]].push_back(label);
-		gtk_container_add(GTK_CONTAINER(labelframe), label); 
+	    //cerr << i << " " << (i-1) % 2<< " xxx: " << " " << currentcore << " " << column << endl;
+	    FieldsGroup *fg = new FieldsGroup(tmp, vertical);
+	    cbdata.cpu_fgs.push_back(fg);
+	    if (vertical) {
+		// left, right, top, bottom
+		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(), 1, 2, column, column+1);
+	    } else {
+		// left, right, top, bottom
+		gtk_table_attach_defaults(GTK_TABLE(maintable), fg->getWidget(), column, column+1, 1, 2);
 	    }
+	    const char *name = 0;
+	    if (!compact && i == 0) name = "user";
+	    fg->add('u', new InfoField(name, "%.1f%%", vertical, progressbar));
+	    //fg->setValue('u', 20.0);
 
+	    if (showniced) {
+		if (!compact && i == 0) name = "niced";
+		fg->add('n', new InfoField(name, "%.1f%%", vertical, progressbar));
+		fg->setValue('n', 40);
+	    }
+	    if (!compact && i == 0) name = "system";
+	    fg->add('s', new InfoField(name, "%.1f%%", vertical, progressbar));
+	    fg->setValue('s', 30);
 	}
+
 	//pango_font_description_free(pfd);
 	
 	// destroy applicatation when window is closed
@@ -375,6 +275,7 @@ int main(int argc, char *argv[]) {
 
 	// loop
 	gtk_main();
+
     }
 
 
