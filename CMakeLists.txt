@@ -55,3 +55,29 @@ add_subdirectory (src)
 # change this in order to avoid /usr/local/
 set(CMAKE_INSTALL_PREFIX /usr/local)
 
+
+SET(MAJOR_VERSION "1")
+SET(MINOR_VERSION "0")
+SET(PATCH_VERSION "0")
+
+set(CPACK_GENERATOR DEB)
+cmake_minimum_required(VERSION 2.8.3)
+find_program(DPKG_SHLIBDEPS dpkg-shlibdeps)
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgtk2.0-0 >= 2.24.23")          
+
+set(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
+set(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
+
+set(CPACK_PACKAGE_NAME "gcpuinfo")
+
+set(CPACK_PACKAGE_VENDOR "Johannes Heinecke")
+set(CPACK_PACKAGE_CONTACT "johannes(dot)heinecke(at)orange(dot)fr")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CPU/GPU load monitor")
+set(CPACK_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\n  displays in a graphic current CPU/GPU load and temperature:\n") 
+
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+include(CPack)
+
+
+

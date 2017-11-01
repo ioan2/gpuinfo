@@ -5,6 +5,7 @@ An option allows to print load information on screen (or to an logfile, if neede
 
 `gcpuinfo` displays current CPU load by reading `/proc/stat`. `ggpuinfo` displays GPU load by using the API provided by the `libnvidia-ml.so` library, which comes with CUDA 8.0.
 
+
 ## License
 
 This library is under the [3-Clause BSD Licence](https://opensource.org/licenses/BSD-3-Clause). See [LICENSE](LICENSE)
@@ -27,6 +28,7 @@ Johannes Heinecke
     cd build
     cmake  -DCMAKE_BUILD_TYPE=Release  [-DCMAKE_INSTALL_PREFIX=/usr/local]  ..	
 
+
 ## Run
 
 Run the following
@@ -36,10 +38,19 @@ Run the following
 
 for help on any option
 
+
 ## Install
 
     cd build
     make install
 
 By default, the tools will be installed in `/usr/local/bin`. To have them installed in a different location, uncomment modify the line `set(CMAKE_INSTALL_PREFIX ../testinstall)` in [CMakeLists.txt](CMakeLists.txt)
+
+
+## Create .deb package
+
+    cd build
+    make package
+
+This produces a .deb package for a Debian/Ubuntu distribution.
 
