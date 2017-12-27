@@ -25,8 +25,11 @@ are permitted provided that the following conditions are met:
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  Author: Johannes Heinecke
- Version:  1.0 as of 2nd September 2017
+ Version:  1.1 as of 27th December 2017
 */
+
+#ifndef __GPUINFO_H__
+#define __GPUINFO_H__
 
 #include <iostream>
 #include <map>
@@ -97,4 +100,4 @@ class GpuInfo {
 };
 
 
-
+#endif

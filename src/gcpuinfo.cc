@@ -25,7 +25,7 @@ are permitted provided that the following conditions are met:
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  Author: Johannes Heinecke
- Version:  1.0 as of 24th September 2017
+ Version:  1.1 as of 27th December 2017
 */
 
 #include <iostream>
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 	     << "  --nn do not show niced" << endl
 	     << "  -v vertical layout" << endl
 	     << "  -c compact view (no labels)" << endl
-	     << " -p progressbar view" << endl
+	     << "  -p progressbar view" << endl
 	     << "\n with -T" <<endl
 	     << "  -t  add time stamp" << endl
 	     << "  -l  log mode" << endl
@@ -199,6 +199,7 @@ int main(int argc, char *argv[]) {
 	    sprintf(tmp, "core %d:", i);
 	    FieldsGroup *fg = new FieldsGroup(tmp, vertical);
 	    cbdata.core_fgs.push_back(fg);
+
 	    const char *name = 0;
 	    if (!compact && i == 0) name = "temperature";
 
@@ -275,7 +276,6 @@ int main(int argc, char *argv[]) {
 
 	// loop
 	gtk_main();
-
     }
 
 
