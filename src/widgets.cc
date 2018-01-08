@@ -180,8 +180,4 @@ CallBackDataCPU::~CallBackDataCPU() {
     }
 }
 
-CallBackDataGPU::~CallBackDataGPU() {
-    for (vector<FieldsGroup *>::iterator it = gpu_fgs.begin(); it != gpu_fgs.end(); ++it) {
-	delete *it;
-    }
-}
+

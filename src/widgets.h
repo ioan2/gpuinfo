@@ -37,7 +37,7 @@ are permitted provided that the following conditions are met:
 #include <vector>
 
 #include "cpuinfo.h"
-#include "gpuinfo.h"
+//#include "gpuinfo.h"
 
 using std::vector;
 using std::map;
@@ -109,16 +109,7 @@ class CallBackDataCPU {
 
 };
 
-class CallBackDataGPU {
- public:
-    CallBackDataGPU() {};
-    ~CallBackDataGPU();
 
-    GpuInfo *gi;
-    vector<FieldsGroup *>gpu_fgs;
-
-
-};
 
 
 #endif

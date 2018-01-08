@@ -46,6 +46,18 @@ using std::map;
 using std::string;
 using std::ostream;
 
+class CallBackDataGPU {
+ public:
+    CallBackDataGPU() {};
+    ~CallBackDataGPU();
+
+    GpuInfo *gi;
+    vector<FieldsGroup *>gpu_fgs;
+
+
+};
+
+
 /** class to get information about the present GPUs */
 class GpuInfo {
  public:
