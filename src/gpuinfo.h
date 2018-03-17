@@ -32,6 +32,7 @@ are permitted provided that the following conditions are met:
 #define __GPUINFO_H__
 
 #include <iostream>
+#include <vector>
 #include <map>
 
 #ifdef _cplusplus
@@ -42,9 +43,15 @@ extern "C" {
 }
 #endif
 
+#include "widgets.h"
+
 using std::map;
 using std::string;
 using std::ostream;
+using std::vector;
+
+class GpuInfo;
+
 
 class CallBackDataGPU {
  public:

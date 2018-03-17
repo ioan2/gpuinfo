@@ -30,6 +30,7 @@ are permitted provided that the following conditions are met:
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "gpuinfo.h"
 
@@ -37,12 +38,14 @@ are permitted provided that the following conditions are met:
 using std::cerr;
 using std::endl;
 using std::ostringstream;
+using std::vector;
 
 
 CallBackDataGPU::~CallBackDataGPU() {
     for (vector<FieldsGroup *>::iterator it = gpu_fgs.begin(); it != gpu_fgs.end(); ++it) {
 	delete *it;
     }
+    gpu_fgs.clear();
 }
 
 GpuInfo::GpuInfo() {
